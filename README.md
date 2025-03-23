@@ -1,8 +1,12 @@
-### PROJECT SETUP
+# PROJECT SETUP
 1. Create a virtual env uisng  `python -m venv venv`
 
+
+# Install all dependencies.
+- Run `pip install -r requirements-dev.txt`
+
 2. activate the virtual environment using  `source venv/bin/activate`
-3. Install fastapi using `pip install fastapi uvicorn scikit-learn pandas numpy`
+
 4. run `pip freeze > requirements.txt` 
 
 5. run `git init` &&  `echo "venv/" > .gitignore`
@@ -32,8 +36,6 @@ I'm open to hearing your feedback about the template and what you'd like to see 
 
 --
 
-# Install all dependencies.
-- Run `pip install -r requirements-dev.txt`
 
 # How to run app. Using Docker with PostgreSQL.
 - Install Docker Desktop
