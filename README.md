@@ -46,6 +46,12 @@ I'm open to hearing your feedback about the template and what you'd like to see 
 - in database/core.py change the DATABASE_URL to sqlite
 - run `uvicorn src.main:app --reload`
 
+
+# How to run  alembic migrations
+- modify your model then
+- Create a New Alembic Revision:  run `alembic revision --autogenerate -m "Some migration message"`
+-  Apply the Migration to Your Database: run `alembic upgrade head`
+
 # How to run tests.
 - Run `pytest` to run all tests
 
