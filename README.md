@@ -50,7 +50,8 @@ I'm open to hearing your feedback about the template and what you'd like to see 
 # How to run  alembic migrations
 - modify your model then
 - Create a New Alembic Revision:  run `alembic revision --autogenerate -m "Some migration message"`
--  Apply the Migration to Your Database: run `alembic upgrade head`
+- Apply the Migration to Your Database: run `alembic upgrade head` or `alembic upgrade {RevisionId}`
+- Downgrade migration by running : `alembic downgrade -1`
 
 # How to run tests.
 - Run `pytest` to run all tests
