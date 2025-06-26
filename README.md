@@ -13,6 +13,10 @@
 
 6. use this command to start/run the app  `uvicorn main:app --reload`
 
+7. use this command to run script on the terminal `PYTHONPATH=. python scripts/train_model.py` --to train model
+- `PYTHONPATH=. python scripts/fetch_movies.py` --to load movies in the db
+ 
+- `PYTHONPATH=. python scripts/train_retrain_model.py` --to train and retrain model
 
 
 

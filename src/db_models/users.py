@@ -17,6 +17,8 @@ class User(Base):
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
     password_hash = Column(String)
+    created_at = Column(String)
+    is_active = Column(String)
 
 
     def __repr__(self):
