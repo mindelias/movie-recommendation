@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from ..core.security import decode_access_token, hash_password, verify_password, create_access_token
@@ -30,20 +30,28 @@ class AuthService:
         )
 
     def _create_user(self, payload: UserSchema.UserCreate) -> User:
+        
         user = User(
             **payload.model_dump(exclude={"password"}),
             password_hash=hash_password(payload.password),
+            created_at=datetime.now(timezone.utc).isoformat(),   
+            is_active="active",
             
         )
+         
         self.db.add(user)
         self.db.commit()
         self.db.refresh(user)
+
         return user
 
     def _authenticate_user(self, email: str, password: str) -> User:
         user = self.db.query(User).filter(User.email == email).first()
         if not user or not verify_password(password, user.password_hash):
-            raise ValueError("Invalid credentials")
+            raise  HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect email or password",
+            )
         return user
 
     def _issue_token(self, user: User) -> UserSchema.LoginResponse:

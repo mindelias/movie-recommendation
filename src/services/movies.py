@@ -111,19 +111,7 @@ class MovieService:
         )
         return [row.movie_id for row in rows]
 
-    # def _personalised(self, user_id: UUID, top_n: int) -> List[UUID]:
-    #     candidate_movies = self.db.query(Movies).all()         # optimise later
-    #     results: list[tuple[int, float]] = []
-
-    #     for m in candidate_movies:
-    #         try:
-    #             predictions = MovieService._model.predict(UUID(user_id), str(m.movie_id))
-    #             results.append((m.movie_id, predictions.est))
-    #         except Exception:
-    #             continue
-
-    #     results.sort(key=lambda t: t[1], reverse=True)
-    #     return [m_id for m_id, _ in results[:top_n]]
+    
     
     
     def _personalised(self, user_id: UUID, top_n: int) -> List[UUID]:

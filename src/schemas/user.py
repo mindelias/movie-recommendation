@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 from pydantic import BaseModel, EmailStr
 
@@ -7,6 +8,7 @@ class UserBase(BaseModel):
     email: EmailStr
     first_name: str
     last_name: str
+     
 
 # Where we add the optional phone_number
 
@@ -21,6 +23,8 @@ class UserUpdate(UserBase):
 
 class UserResponse(UserBase):
     id: UUID
+    is_active: str
+    created_at: datetime
 
     class Config:
         from_attributes = True

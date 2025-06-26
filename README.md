@@ -1,46 +1,153 @@
-# PROJECT SETUP
-1. Create a virtual env uisng  `python -m venv venv`
+# Movie Recommendation System - End-to-End Pipeline
+## Overview
+This system provides personalized movie recommendations using collaborative filtering. It combines historical rating data from MovieLens with current movie metadata from TMDb to deliver relevant suggestions through a FastAPI service. The solution handles cold starts using popularity-based fallback recommendations.
+
+### Key Components
+1. DETAILED WORKFLOW
+  - Data Processing Pipeline
+
+  - Model Training System
+
+  - TMDb Integration
+
+  - Recommendation API
+
+  - Database Schema
+
+2. PROJECT SETUP
+  - Prerequisites
+  - Installation
+  - Database Setup with Alembic
+
+## Detailed Workflow
+
+## 1. Data Preparation
+Processes raw MovieLens data into training-ready format:
+
+`PYTHONPATH=. python scripts/data_preprocessing.py`
+
+**Steps**:
+**i**. Loads movies, ratings, and links CSVs
+
+**ii**. Merges datasets on movieId
+
+**iii**. Filters out:
+
+**iv**. Movies without TMDb IDs
+
+**v**. Users with fewer than 10 ratings
+
+**vi**. Saves processed data to data/processed/ratings_filtered.csv
+
+## 2. Train/Test Split
+Creates training and testing datasets: `PYTHONPATH=. python scripts/split_data.py`
+
+***Process***:
+
+**i** 80/20 train-test split
+**ii**Outputs:
+  - data/processed/train.csv
+  - data/processed/test.csv
+
+## 3. Model Training
+Trains SVD recommendation model: `python scripts/train_model.py`
+
+***Training Process***:
+
+**i** Loads training data
+**ii** Performs grid search for optimal hyperparameters:
+**iii** Trains final SVD model with best parameters
+**iv**Computes popularity-based fallback recommendations
+**v**Saves:
+  - Model to models/svd_model.pkl
+  - Popularity data to database
 
 
-# Install all dependencies.
-- Run `pip install -r requirements-dev.txt`
+## 4. Movie Catalog Update
+Fetches current movies from TMDb: `python scripts/fetch_movies.py`
 
-2. activate the virtual environment using  `source venv/bin/activate`
+**Data Collection**:
+**i**Pulls from 3 endpoints:
+  - Now Playing
 
-4. run `pip freeze > requirements.txt` 
+  - Popular
 
-5. run `git init` &&  `echo "venv/" > .gitignore`
+  - Top Rated
 
-6. use this command to start/run the app  `uvicorn main:app --reload`
+**ii**Processes 30-50 movies per fetch
 
-7. use this command to run script on the terminal `PYTHONPATH=. python scripts/train_model.py` --to train model
-- `PYTHONPATH=. python scripts/fetch_movies.py` --to load movies in the db
+**iii**Stores in database with schema:
+
  
-- `PYTHONPATH=. python scripts/train_retrain_model.py` --to train and retrain model
+
+# PROJECT SETUP
+
+### 1. Prerequisites
+ - Python 3.9+
+ - PostgreSQL 13+
+ - TMDb API key (set as TMDB_API_KEY environment variable)
 
 
 
-# Clean Architecture Template
+### 2. Installation
 
-What's included in the template?
+  **Clone repository**
+  git clone https://github.com/yourusername/movie-recommendation.git
+  cd movie-recommendation
 
-- Domain layer with sample entities.
-- Application layer with abstractions for:
-  - Example use cases
-  - Cross-cutting concerns (logging, validation)
-- Infrastructure layer with:
-  - Authentication
-  - SQLAlchemy, PostgreSQL (you can change to SQLite for development in database/core.py)
-  - Rate limiting on registration
-- Testing projects
-  - Pytest unit tests
-  - Pytest integration tests (e2e tests)
+  **Create virtual environment**
+  - python -m venv venv
+  - activate the virtual environment using  `source venv/bin/activate`
+  - run `pip freeze > requirements.txt` 
+  - run `git init` &&  `echo "venv/" > .gitignore`
+  - use this command to start/run the app  `uvicorn main:app --reload`
 
-I'm open to hearing your feedback about the template and what you'd like to see in future iterations. DM me on LinkedIn or email me.
-
---
+  **Install dependencies**
+  `pip install -r requirements-dev.txt`
+ 
 
 
+### 3. Database Setup with Alembic
+  **1 Configuration**: Create an .env file in your project root:
+    ***env**
+    DATABASE_URI=postgresql+psycopg2://postgres:yourpassword@localhost:5432/movierecommendations
+    JWT_SECRET_KEY=your_strong_secret_key
+    TMDB_API_KEY=your_tmdb_api_key`
+
+  **2 Database Creation**: Create the database via PostgreSQL CLI:
+    `psql -U postgres -c "CREATE DATABASE movierecommendations;`
+  
+  **3 Alembic Setup**: Initialize Alembic (if it does not exist):
+    `alembic init migrations`
+
+  **4 Run All Migrations**: `alembic upgrade head` 
+
+### 4. Load Initial Data
+  **Preprocess MovieLens data**
+  `python scripts/preprocess.py`
+
+  **Train initial model**
+  `python scripts/train_model.py`
+
+  **Fetch current movies**
+  `python scripts/fetch_movies.py`
+   
+
+
+ 
+
+
+
+ 
+
+
+
+
+ 
+
+
+
+ 
 # How to run app. Using Docker with PostgreSQL.
 - Install Docker Desktop
 - Run `docker compose up --build`
