@@ -10,6 +10,7 @@ from surprise.model_selection import GridSearchCV
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session
  
+from db_models.movies import Movies
 from src.database.session import SessionLocal
 from src.db_models.top_movies import TopMovies
 
@@ -48,10 +49,15 @@ def load_and_split_filtered_csv():
 def train_svd_model(train_df):
     # Convert IDs to strings - CRITICAL FIX
     train_df["userId"] = train_df["userId"].astype(str)
-    train_df["tmdbId"] = train_df["tmdbId"].astype(str)
+    train_df["final_id"] = train_df["tmdbId"].where(
+            train_df["tmdbId"].notna(), 
+            -train_df["movieId"]  # Negative = MovieLens ID
+        )
+    train_df["final_id"] = train_df["final_id"].astype(str)
+    
 
     reader = Reader(rating_scale=(0.5, 5.0))
-    data = Dataset.load_from_df(train_df[["userId", "tmdbId", "rating"]], reader)
+    data = Dataset.load_from_df(train_df[["userId", "final_id", "rating"]], reader)
     # print('Type of data is', len(data))
 
     # Grid search for best hyperparams
@@ -99,7 +105,7 @@ def compute_popularity_fallback(train_df, min_count=10):
     Return a DataFrame with columns [tmdbId, mean_rating, rating_count]
     sorted by mean_rating desc, filtered by rating_count >= min_count.
     """
-    popularity = train_df.groupby("tmdbId")["rating"].agg(["mean", "count"])
+    popularity = train_df.groupby("final_id")["rating"].agg(["mean", "count"])
     popularity.columns = ["mean_rating", "rating_count"]
     # Filter out movies with fewer than `min_count` ratings
     popularity = popularity[popularity["rating_count"] >= min_count]
@@ -125,18 +131,25 @@ def store_popularity_in_db(popularity_df):
     try:
         # 1) Clear existing data in top_movies
         db.query(TopMovies).delete()
-        db.commit()
+        existing_ids = {id[0] for id in db.query(Movies.movie_id).all()}
 
-        # 2) Insert new rows
         for _, row in popularity_df.iterrows():
+            movie_id = int(row["final_id"])
+            
+            # Only store movies that exist in your database
+            if movie_id > 0 and movie_id not in existing_ids:
+                continue  # Skip TMDB movies not in your DB
+                
             record = TopMovies(
-                movie_id=int(row["tmdbId"]),
+                movie_id=movie_id,  # Could be TMDB ID or negative ML ID
                 mean_rating=float(row["mean_rating"]),
                 rating_count=int(row["rating_count"])
             )
             db.add(record)
-        
         db.commit()
+
+         
+         
         print("Inserted popularity fallback into 'top_movies' table via SQLAlchemy.")
     except Exception as e:
         db.rollback()

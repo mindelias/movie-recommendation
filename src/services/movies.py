@@ -119,61 +119,59 @@ class MovieService:
         rated_query = self.db.query(Ratings.movie_id).filter(
             Ratings.user_id == user_id
         )
-        candidate_movies = (
-            self.db.query(Movies)
-            .filter(
-                Movies.movielens_id.isnot(None),
-                ~Movies.movie_id.in_(rated_query)
-            )
-            .all()
-        )
+        # Debug 1: Log rated movies
+        rated_movies = [r[0] for r in rated_query.all()]
+        print(f"DEBUG: User {user_id} has rated {len(rated_movies)} movies: {rated_movies}")
+
+        # candidate_movies = (
+        # self.db.query(Movies)
+        # .filter(
+        #     Movies.movielens_id.isnot(None),
+        #     ~Movies.movie_id.in_(rated_query)
+        # )
+        # .all()
+        # )
+
+        candidate_movies = self.db.query(Movies).filter(
+        ~Movies.movie_id.in_(rated_query)
+        ).all()
+
+         # Debug 2: Log candidate movies
+        print(f"DEBUG: Found {len(candidate_movies)} candidate movies with movielens_id")
+        if candidate_movies:
+            print(f"DEBUG: First candidate movie: ID={candidate_movies[0].movie_id}, movielens={candidate_movies[0].movielens_id}")
+        else:
+            print("DEBUG: No candidate movies found")
         
         results = []
         user_str = str(user_id)
+
+        # Debug 3: Log user string format
+        print(f"DEBUG: Prediction user_id format: '{user_str}'")
         
         for movie in candidate_movies:
             try:
+                # Debug 4: Log before prediction
+                print(f"DEBUG: Predicting for movie {movie.movie_id} (movielens={movie.movie_id})")
                 # Predict using movielens_id
                 pred = MovieService._model.predict(
                     user_str, 
-                    str(movie.movielens_id)
+                    str(movie.movie_id)
                 )
+                # Debug 5: Log successful prediction
+                print(f"DEBUG: Prediction success! User: {user_str}, Movie: {movie.movie_id}, Score: {pred.est}")
+
                 results.append((movie.movie_id, pred.est))
             except Exception as e:
                 print(f"Prediction error for movie {movie.movie_id}: {str(e)}")
                 continue
-        
+
+        print(f"DEBUG: Unsorted results: {results}")
         results.sort(key=lambda x: x[1], reverse=True)
+
+        # Debug 7: Log final results
+        print(f"DEBUG: Top {top_n} results: {results[:top_n]}")
+    
         return [m_id for m_id, _ in results[:top_n]]
 
-    # def recommend_for_user(user_id: int, model, db: Session, top_n=5):
-    #     """
-    #     1. Check how many ratings user has in 'ratings' table.
-    #     2. If < 5 => fallback from 'top_movies'.
-    #     3. Otherwise => SVD predictions for known movie IDs from training set (or skip new ones).
-    #     """
-    #     # 1) Check rating count
-    #     user_rating_count = db.query(Ratings).filter(Ratings.user_id == user_id).count()
-    #     if user_rating_count < 5:
-    #         # Cold start fallback
-    #         fallback = db.query(TopMovies).order_by(TopMovies.mean_rating.desc()).limit(top_n).all()
-    #         return [f.movie_id for f in fallback]
-    #     else:
-    #         # Seasoned user => SVD
-    #         # We only predict for movies the model knows
-    #         # Suppose we track known IDs in a global set or we do next best approach
-    #         # For demonstration, let's do a quick approach: 
-    #         candidate_movies = db.query(Movies).all()  # might be large
-    #         results = []
-    #         for m in candidate_movies:
-    #             # The model was trained with userId & movieId from the offline set
-    #             # Some might be missing. We'll try str casting
-    #             try:
-    #                 pred = model.predict(str(user_id), str(m.id))
-    #                 results.append((m.id, pred.est))
-    #             except:
-    #                 # If the model can't handle this ID, skip it
-    #                 pass
-    #         # Sort
-    #         results.sort(key=lambda x: x[1], reverse=True)
-    #         return [r[0] for r in results[:top_n]]
+     
